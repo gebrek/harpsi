@@ -1,0 +1,7 @@
+* notes from <2016-04-07 Thu>
+  * functor :: function on a structure
+  * family polymorphism :: allows you to transform a group of objects
+    into a different group of objects
+  * curry-howard correspondence
+  * synopsis
+  * daniel spiwak

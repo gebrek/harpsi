@@ -1,1 +1,2 @@
-%{"synthex": {:hex, :synthex, "0.0.1"}}
+%{"erlexec": {:hex, :erlexec, "1.1.2"},
+  "synthex": {:hex, :synthex, "0.0.1"}}

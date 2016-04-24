@@ -27,6 +27,7 @@ defmodule Harpsi.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    [{:synthex, "~> 0.0.1"}]
+    [{:erlexec, "~> 1.1"},
+		 {:synthex, "~> 0.0.1"}]
   end
 end

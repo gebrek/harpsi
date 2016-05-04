@@ -1,119 +1,83 @@
-defmodule Chord do
-	defstruct notes: []
+defmodule Staff do
+	defstruct bpm: 120, measures: []
+
+	def play(staff) do
+		# tagged = tag_note_lengths(staff.measures, staff.bpm)
+		tagged = tag_note_delays(staff.measures, 0.0, staff.bpm)
+		# for {timing, note} <- tagged do
+		# 	spawn_note(round(timing * 1000), note)
+		# end
+		Parallel.pmap(tagged, fn({timing, note}) -> 
+			delayed_spawn_note(round(timing * 1000), note) end)
+	end
+
+	def tag_note_lengths(measure, bpm) do
+		case measure do
+			[head | tail] ->
+				[{Note.time(head, bpm), head} 
+				 | tag_note_lengths(tail, bpm)]
+			[last] ->
+				[{Note.time(last, bpm), last}]
+			[] ->
+				[]
+		end
+	end
+
+	def tag_note_delays(measure, delay, bpm) do
+		case measure do
+			[head | tail] ->
+				[{delay, head}
+				 | tag_note_delays(tail, delay + Note.time(head, bpm), bpm)]
+			[last] ->
+				[{delay, last}]
+			[] ->
+				[]
+		end
+	end
+
+	defp spawn_note(timing, note) do
+		IO.inspect({timing, note})
+		spawn(Note, :play, [note])
+		:timer.sleep(timing)
+	end
+
+	defp delayed_spawn_note(delay, note) do
+		:timer.sleep(delay)
+		IO.inspect {delay, note}
+		spawn(Note, :play, [note])
+	end		
 end
 
 defmodule Note do
-	defstruct name: "", type: 4, octave: 4, stamp: 0
-end
+	defstruct name: "C", type: 4, octave: 4
 
-defmodule Harpsi do
-	def default_opts(opts \\ %{}) do
-		# completes the opts map with the default args,
-		# or overrides with specified input
-		# also serves as an ad hoc specification of options
-		%{time_sig: Map.get(opts, :time_sig, 4),
-			note_type: Map.get(opts, :note_type, 4),
-			octave: Map.get(opts, :octave, 4)}
-	end
-
-	def process_measure(measure, %{note_type: type}) do
-		for {place, stamp} <- String.split(measure, " "), into: [] do
-			IO.inspect place
-			%Note{name: cond do
-						 String.contains?(place, "/") ->
-							 pieces = String.split(place, "/")
-							 hd(pieces)
-						 true ->
-							 place
-					 end,
-						type: cond do
-							String.contains?(place, "/") ->
-								hd(tl(String.split(place, "/")))
-							true ->
-								type
-						end}
-		end
-	end
-
-	def process_chord()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	def with_opts(opts, do: block) do
-		notes = String.upcase(block)
-		|> String.split(" ")
-		|> Enum.map(fn(x) -> String.to_atom x end)
-		for n <- notes, into: [] do
-			{n, opts}
-		end
-	end
-
-	def valid_notes do
-		for n <- 1..7, l <- String.graphemes("CDEFGAB") do
-			l <> to_string(n)
-		end
-	end
-
-	def process_note(note, opts) do
-		cond do
-			Enum.member?(String.graphemes("CDEFGAB"), note) ->
-				n = note <> "4"
-			Enum.member?(valid_notes, note) ->
-				n = note
-			true ->
-				raise "error"
-		end
-	end
-
-	def mod_octave(oct, oct: mod) do
-		cond do
-			String.contains? mod, "+" ->
-				to_string(String.to_integer(oct) + String.to_integer(String.replace(mod, "+", "")))
-			String.contains? mod, "-" ->
-				to_string(String.to_integer(oct) - String.to_integer(String.replace(mod, "-", "")))
-			true ->
-				mod
-		end
+	def play(note, opts \\ %{}) do
+		System.cmd("play", note_args(note, opts))
+		# :timer.kill_after(100 * Map.get(opts, :len, 2))
 	end
 
 	def note_args(note, opts) do
 		["-qn", "synth",
-		 Integer.to_string(Map.get(opts, :len, 2)),
-		 Map.get(opts, :type, "pluck"), 
-		 process_note(note, opts),
+		 to_string(2 / note.type),
+		 Map.get(opts, :type, "pluck"),
+		 process_note(note),
 		 "vol", Map.get(opts, :vol, "1")
 		]
 	end
 
-	def note(note, opts \\ %{}) do
-		System.cmd("play", note_args(note, opts))
-		:timer.kill_after (100 * Map.get(opts, :len, 2))
-  end
+	def process_note(note) do
+		note.name <> to_string(note.octave)
+	end
 
-	def notes(notes, timing, opts \\ %{}) do
-		for note <- notes do
-			spawn_note(timing, note, opts)
+	def valid_notes do
+		for names <- String.graphemes("CDEFGAB"),
+		types <- [1, 2, 4, 8, 16],
+		octaves <- 1..7, into: [] do
+			%Note{name: names, type: types, octave: octaves}
 		end
 	end
 
-	defp spawn_note(timing, note, opts) do
-		child = spawn(Harpsi, :note, [note, opts])
-		:timer.sleep(timing)
-		Process.exit(child, :kill)
+	def time(note, bpm) do
+		(4 / note.type) * (60 / bpm)
 	end
-
 end
-
-# ~w(B A G A B B B A A A B D D B A G A B B B B A A B A G)

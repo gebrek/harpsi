@@ -1,0 +1,24 @@
+(* beats-per-measure, measures-per-staff *)
+(* _, "note-type"*)
+time-signature = number ":" number ;
+
+staff = "[" time-signature [ octave ] "|" { measure } "]" ;
+
+measure = chord | note-signature ;
+
+(* plays multiple notes simultaneously *)
+chord = "{" note "," { note }  "}"  [ "/" duration ] ;
+
+note = ("C" | "D" | "E" | "F" | "G" | "A" | "B")  [ partial-step ] ;
+
+note-or-rest = "_" | note ;
+
+octave = "o" ("0" | "1" | "2" | "3" | "4" | "5" | "6" | "7") ;
+
+(* whole, half, quarter, eigth, sixteenth *)
+duration = "1" | "2" | "4" | "8" | "16" ;
+
+(* sharp, double-sharp, flat, double-flat, natural *)
+partial-step = "+" | "++" | "-" | "--" | "=" ;
+
+note-signature = note-or-rest  [ "/" duration ] ;

@@ -1,9 +1,62 @@
-defmodule Harpsi do
+defmodule Chord do
+	defstruct notes: []
+end
 
-	defmacro with_opts(opts, do: block) do
-		quote do
-			Enum.map unquote(block), fn(x) -> 	# &(Enum.map &1, fn(x) -> IO.puts x end)
-			end
+defmodule Note do
+	defstruct name: "", type: 4, octave: 4, stamp: 0
+end
+
+defmodule Harpsi do
+	def default_opts(opts \\ %{}) do
+		# completes the opts map with the default args,
+		# or overrides with specified input
+		# also serves as an ad hoc specification of options
+		%{time_sig: Map.get(opts, :time_sig, 4),
+			note_type: Map.get(opts, :note_type, 4),
+			octave: Map.get(opts, :octave, 4)}
+	end
+
+	def process_measure(measure, %{note_type: type}) do
+		for {place, stamp} <- String.split(measure, " "), into: [] do
+			IO.inspect place
+			%Note{name: cond do
+						 String.contains?(place, "/") ->
+							 pieces = String.split(place, "/")
+							 hd(pieces)
+						 true ->
+							 place
+					 end,
+						type: cond do
+							String.contains?(place, "/") ->
+								hd(tl(String.split(place, "/")))
+							true ->
+								type
+						end}
+		end
+	end
+
+	def process_chord()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	def with_opts(opts, do: block) do
+		notes = String.upcase(block)
+		|> String.split(" ")
+		|> Enum.map(fn(x) -> String.to_atom x end)
+		for n <- notes, into: [] do
+			{n, opts}
 		end
 	end
 
@@ -44,19 +97,19 @@ defmodule Harpsi do
 		]
 	end
 
-	def note(note, opts \\ []) do
+	def note(note, opts \\ %{}) do
 		System.cmd("play", note_args(note, opts))
 		:timer.kill_after (100 * Map.get(opts, :len, 2))
   end
 
-	def notes(notes, timing, opts \\ []) do
+	def notes(notes, timing, opts \\ %{}) do
 		for note <- notes do
 			spawn_note(timing, note, opts)
 		end
 	end
 
 	defp spawn_note(timing, note, opts) do
-		child = spawn(Harpsi.Play, :note, [note, opts])
+		child = spawn(Harpsi, :note, [note, opts])
 		:timer.sleep(timing)
 		Process.exit(child, :kill)
 	end

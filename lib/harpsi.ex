@@ -2,25 +2,9 @@ defmodule Staff do
 	defstruct bpm: 120, measures: []
 
 	def play(staff) do
-		# tagged = tag_note_lengths(staff.measures, staff.bpm)
 		tagged = tag_note_delays(staff.measures, 0.0, staff.bpm)
-		# for {timing, note} <- tagged do
-		# 	spawn_note(round(timing * 1000), note)
-		# end
 		Parallel.pmap(tagged, fn({timing, note}) -> 
 			delayed_spawn_note(round(timing * 1000), note) end)
-	end
-
-	def tag_note_lengths(measure, bpm) do
-		case measure do
-			[head | tail] ->
-				[{Note.time(head, bpm), head} 
-				 | tag_note_lengths(tail, bpm)]
-			[last] ->
-				[{Note.time(last, bpm), last}]
-			[] ->
-				[]
-		end
 	end
 
 	def tag_note_delays(measure, delay, bpm) do
@@ -33,12 +17,6 @@ defmodule Staff do
 			[] ->
 				[]
 		end
-	end
-
-	defp spawn_note(timing, note) do
-		IO.inspect({timing, note})
-		spawn(Note, :play, [note])
-		:timer.sleep(timing)
 	end
 
 	defp delayed_spawn_note(delay, note) do

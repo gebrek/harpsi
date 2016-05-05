@@ -58,7 +58,7 @@ defmodule Note do
 
 	def note_args(note, opts) do
 		["-qn", "synth",
-		 to_string(2 / note.type),
+		 to_string(4 / note.type),
 		 Map.get(opts, :type, "pluck"),
 		 process_note(note),
 		 "vol", Map.get(opts, :vol, "1")

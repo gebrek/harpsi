@@ -7,20 +7,20 @@ defmodule Meta do
     for _ <- 1..times, into: [], do: thing
   end
 
-  def process_notestring(ns) do
+  def process_notestring(ns, opts) do
     ns
     |> String.split(" ")
     |> Enum.filter(&(&1 != ""))
-    |> process_measures
+    |> process_measures(opts)
   end
 
-  def process_measures(list) do
+  def process_measures(list, opts) do
     list
-    |> Enum.map(&process_word/1)
+    |> Enum.map(&process_word(&1, opts))
     |> List.flatten
   end
 
-  def process_word(word, opts \\ %{}) do
+  def process_word(word, opts) do
     word = String.upcase(word)
     cond do
       String.match?(word, ~r<^O[1-7].*>) ->
@@ -48,32 +48,32 @@ defmodule Meta do
     cap = Regex.named_captures(~r/(?<word>.*)\*(?<times>.*)/, word)
     repeat(process_word(cap["word"], opts), String.to_integer(cap["times"]))
   end
-  
+
   def process_type(word, opts) do
     cap = Regex.named_captures(~r/(?<word>.*)\/(?<type>.*)/, word)
     process_word(cap["word"], Map.put(opts, :type, String.to_integer(cap["type"])))
   end
 
   def process_chord(word, opts) do
-    %Chord{type: Map.get(opts, :type, 4),
+    %Chord{type: opts.type,
 	   notes: (for n <- String.graphemes(word) do
 		     process_word(n, opts)
 		   end)}
   end
-  
+
   def process_note(word, opts) do
     if String.match?(word, ~r/[A-G_]/) do
       cond do
 	word == "_" ->
-	  %Rest{type: Map.get(opts, :type, 4)}
+	  %Rest{type: opts.type}
 	true ->
 	  %Note{name: word,
-		type: Map.get(opts, :type, 4),
-		octave: Map.get(opts, :octave, 4)}
+		type: opts.type,
+		octave: opts.octave}
       end
     else
       raise "Invalid note #{word}"
     end
   end
-  
+
 end

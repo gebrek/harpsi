@@ -3,10 +3,8 @@ defmodule Temp do
 
   def auder do
     piece do
-      bpm 120 do
-	staff do
-	  "ab c ab c ab c ab c "
-	end
+      w_opt bpm: 120, octave: 3, type: 3 do
+	staff "a b o4c"		
       end
     end
   end

@@ -3,7 +3,7 @@ defmodule Piece do
 
   def play(piece) do
     Parallel.pmap(piece.staffs, &Staff.play/1)
-  end  
+  end
 end
 
 defmodule Rest do
@@ -28,11 +28,11 @@ defmodule Chord do
 end
 
 defmodule Staff do
-  defstruct bpm: 120, measures: []
+  defstruct bpm: 120, octave: 4, measures: []
 
   def play(staff) do
     tagged = tag_note_delays(staff, 0.0)
-    Parallel.pmap(tagged, fn({timing, note}) -> 
+    Parallel.pmap(tagged, fn({timing, note}) ->
       delayed_spawn_note(round(timing * 1000), note) end)
   end
 
@@ -70,7 +70,7 @@ defmodule Staff do
     :timer.sleep(delay)
     IO.inspect {delay, note}
     spawn(Note, :play, [note])
-  end		
+  end
 end
 
 defmodule Note do

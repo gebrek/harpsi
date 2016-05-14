@@ -18,7 +18,7 @@ defmodule Lang do
   def put_buffer(buff, content), do: Agent.update(buff, &[content | &1])
   def render(buff), do: Agent.get(buff, &(&1)) |> Enum.reverse
 
-  def start_env(), do: Agent.start_link(fn -> [%{}] end)
+  def start_env(), do: Agent.start_link(fn -> [%{bpm: 120, octave: 4, type: 4}] end)
   def stop_env(env), do: Agent.stop(env)
   def push_env(env, attr_map) do
     new = Map.merge(get_env(env), attr_map)
@@ -27,11 +27,12 @@ defmodule Lang do
   def get_env(env), do: Agent.get(env, &(&1)) |> hd
   def pop_env(env), do: Agent.update(env, &tl/1)
 
-  defmacro staff(do: inner) do
+  defmacro staff(inner) do
     quote do
       put_buffer var!(buffer, Lang),
 	%Staff{bpm: get_env(var!(env, Lang))[:bpm],
-	       measures: process_notestring(unquote(inner))}
+	       octave: get_env(var!(env, Lang))[:octave],
+	       measures: process_notestring(unquote(inner), get_env(var!(env, Lang)))}
     end
   end
 
@@ -43,4 +44,23 @@ defmodule Lang do
       pop_env var!(env, Lang)
     end
   end
+
+  defmacro octave(o, do: inner) do
+    quote do
+      push_env var!(env, Lang),
+	%{octave: unquote(o)}
+      unquote(inner)
+      pop_env var!(env, Lang)
+    end
+  end
+
+  defmacro w_opt(kwl, do: inner) do
+    quote do
+      push_env var!(env, Lang),
+	Enum.into(unquote(kwl), %{})
+      unquote(inner)
+      pop_env var!(env, Lang)
+    end
+  end
+	
 end

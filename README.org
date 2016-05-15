@@ -1,2 +1,69 @@
 #+TITLE: Building a DSL for Music Composition
 #+AUTHOR: Jacob Sonnenberg
+*
+* The Language
+  The language is made up of two major parts, macros and
+  note-strings. Macros provide some convenience facility for writing
+  in Elixir while the note-strings are bit-strings which are parsed to
+  generate the data.
+** Note-Strings in the Language
+   In Harpsi the actual playable data is decided primarily by
+   note-strings. The note-strings are parsed into chords and notes and
+   act as below staff level. Transformation from raw string to
+   playable datastructure is performed by the [[file:lib/parser.ex]]. The
+   backbone of the ~Parser~ is ~process_word~ which serves as a
+   dispatch to the various rules defining how the notes are
+   constructed, each case of the cond serve as the individual rules
+   for note construction. The rules of course can be any elixir
+   expression. Regular expressions serve as the rules for how notes
+   are constructed. 
+
+   The `bottom' of the language is ~process_note~, every word must
+   decompose into single letters naming the notes A through G, or a
+   rest. The language for note-strings is essentially a series of
+   manipulations on ~%Note~, ~%Chord~, and ~%Rest~ structs, and so exists in the
+   small domain that currently allows. In the future this domain could
+   be expanded by changing a finite number of (albeit yet
+   undocumented) functions, and adding more fields to the two structs,
+   and enhancing the engine. But it serves as a simple basis for my
+   purposes that permits some limited amount of expression.
+
+   As for rules, a good example is ~process_doctave~:
+   #+BEGIN_SRC elixir
+     def process_doctave(word, opts) do
+       cap = Regex.named_captures(~r/^(?<up_or_down>[<>])(?<word>.*)/, word)
+       process_word(cap["word"], Map.put(opts, :octave,
+             opts.octave + (case cap["up_or_down"] do
+                              "<" -> -1
+                              ">" -> 1
+                            end)))
+     end
+   #+END_SRC
+   each rule should work on a certain foundation that could
+   potentially be better enforced as macro. Implementing it is an
+   exercise for the reader, but I'll note patterns that exist. The
+   ~word~ arg is the individual note-string note in a staff. This is
+   disected by the rules via regex into the three basic structs,
+   ~%Note~ and ~%Chord~, and ~%Rest~. On the other hand ~opts~ is
+   concerned with the rest of the data associated with the notes.
+
+   Most rules are built like
+   #+BEGIN_SRC elixir
+     def process_<case>(word, opts) do
+       cap = Regex.named_captures(<regex recognizing case>, word)
+       process_word(<transformation on cap["word"]>,
+         <transformations of the structs>)
+     end
+   #+END_SRC
+   with a little imagination, one could construct a macro for defining
+   these rules in a structured way by templating the above snippet and
+   adding an entry to a list of callback functions invoked by
+   ~process_word~. More generally, the rules should have one of three
+   things in the tail place of the function. That is,
+   1. A recursive call back to ~process_word~ with modified parameters
+   2. A ~Note~ struct
+   3. A ~Rest~ struct
+   Chord not included in the list because they're only a structure
+   requiring constituent notes, of course.
+** Macros in the Language
+   

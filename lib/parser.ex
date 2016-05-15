@@ -1,9 +1,9 @@
-defmodule Meta do
+defmodule Parser do
 
-  def repeat(_thing, times) when times < 1 do
+  defp repeat(_thing, times) when times < 1 do
     []
   end
-  def repeat(thing, times) do
+  defp repeat(thing, times) do
     for _ <- 1..times, into: [], do: thing
   end
 
@@ -23,24 +23,34 @@ defmodule Meta do
   def process_word(word, opts) do
     word = String.upcase(word)
     cond do
-      String.match?(word, ~r<^O[1-7].*>) ->
+      String.match?(word, ~r/^O(?<octave>[1-7])(?<word>.*)/) ->
 	process_octave(word, opts)
-      String.match?(word, ~r<.*\*.*>) ->
+      String.match?(word, ~r/^(?<up_or_down>[<>])(?<word>.*)/) ->
+	process_doctave(word, opts)
+      String.match?(word, ~r/(?<word>.*)\*(?<times>.*)/) ->
 	process_times(word, opts)
-      String.match?(word, ~r<.*/.*>) ->
+      String.match?(word, ~r/(?<word>.*)\/(?<type>.*)/) ->
 	process_type(word, opts)
       String.match?(word, ~r<.{2,}>) ->
 	process_chord(word, opts)
-      String.match?(word, ~r<^.$>) ->
+      String.match?(word, ~r/[A-G_]/) ->
 	process_note(word, opts)
       true ->
-	IO.puts "else"
+	raise "Invalid note-string"
     end
+  end
+
+  def process_doctave(word, opts) do
+    cap = Regex.named_captures(~r/^(?<up_or_down>[<>])(?<word>.*)/, word)
+    process_word(cap["word"], Map.put(opts, :octave,
+	  opts.octave + (case cap["up_or_down"] do
+			   "<" -> -1
+			   ">" -> 1
+			 end)))
   end
 
   def process_octave(word, opts) do
     cap = Regex.named_captures(~r/^O(?<octave>[1-7])(?<word>.*)/, word)
-    IO.inspect cap
     process_word(cap["word"], Map.put(opts, :octave, String.to_integer(cap["octave"])))
   end
 

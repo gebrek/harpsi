@@ -1,5 +1,5 @@
 defmodule Lang do
-  import Meta
+  import Parser
 
   defmacro piece(do: block) do
     quote do

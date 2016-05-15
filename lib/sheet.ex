@@ -1,4 +1,6 @@
 defmodule Sheets do
+  import Lang
+
   def mary_had_a_little_lamb do
     %Staff{bpm: 160,
 	   measures: [
@@ -76,7 +78,7 @@ defmodule Sheets do
 	   measures: ms}
   end
   
-  # note constructor
+  # ad-hoc note constructor
   def ntc(note_string, type \\ 4) do
     for x <- String.graphemes(note_string), into: [] do
       %Note{name: x, type: type}
@@ -85,6 +87,28 @@ defmodule Sheets do
   def ntb(note_string, type \\ 1) do
     for x <- String.graphemes(note_string), into: [] do
       %Note{name: x, type: type, octave: 3}
+    end
+  end
+
+  def rosie do
+    piece do
+      w_opt bpm: 100 do
+	staff "d d/8 o3b e/8 d/3 _ _/8 d d/8 o3b e/8"
+	w_opt octave: 3 do
+	  staff "_/1 _/3 b c/8 _/4" 
+	end
+      end
+    end
+  end
+
+  def london_bridge do
+    piece do
+      w_opt octave: 3, bpm: 100, type: 3 do
+	staff "d e d c b c d/2 a b c/2 b c d/2 d e d c b c d/2 a/2 d/2 bg g"
+	w_opt type: 2 do
+	  staff "g g g g o2d o2d g g g g g g o2d o2d"
+	end
+      end
     end
   end
 end

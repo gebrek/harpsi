@@ -1,4 +1,4 @@
-% Created 2016-05-16 Mon 23:46
+% Created 2016-05-17 Tue 00:42
 \documentclass[11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -30,7 +30,23 @@
 
 \section{Introduction}
 \label{sec-1}
+The purpose of this document is to outline what I learned in
+creating a small domain specific language for music
+composition. There are three main parts in this project: the engine
+the DSL is built on, the raw string data that's parsed into music
+data, and finally the macros which allow some convenience in working
+in the DSL in Elixir.
 
+The later two represent two approaches to building (or extending)
+languages. Raw strings can be very expressive for many purposes when
+parsed since there's no limit on how complexly language is
+constructed, and provide only an unstructured way for extending a
+language. On the other hand macros are a more structured form of
+language extension and DSL construction.
+
+The order topics are covered reflects the order I built them in. In
+Lisp tradition I built it from the ground up, creating the basis for
+the application and abstracting on top of that.
 \section{The engine}
 \label{sec-2}
 Underlying the higher level constructs for constructing pieces of
@@ -43,15 +59,15 @@ data-types:
 \item Staff
 \item Note
 \end{enumerate}
-The first three are simpler than the last two. \verb~Piece~'s and
-\verb~Chord~'s are just structural indicators on \verb~Staff~'s and \verb~Note~'s
-respectively. \verb~Rest~'s are just placeholders for an empty location
+The first three are simpler than the last two. \texttt{Piece}'s and
+\texttt{Chord}'s are just structural indicators on \texttt{Staff}'s and \texttt{Note}'s
+respectively. \texttt{Rest}'s are just placeholders for an empty location
 in a staff where a note typically exists.
 
 \subsection{Note Module}
 \label{sec-2-1}
 This module defines a note struct and methods to generate sound
-data based off of the fields of \verb~%Note~ structs. As it stands it
+data based off of the fields of \texttt{Note} structs. As it stands it
 relies on the external program \emph{SoX} to generate the note
 sounds. This back-end for generating the sounds can be changed with
 a small amount of effort because, fortunately, the procedures for
@@ -79,13 +95,13 @@ end
 
 \subsection{Staff Module}
 \label{sec-2-2}
-The \verb~Staff~ module defines the majority of the behavior for groups
+The \texttt{Staff} module defines the majority of the behavior for groups
 of notes. The main function of this is to handle beats-per-minute
 associated with a collection of measures, or notes.
 
-\verb~Staff~ is the main mover in the underlying engine as it groks most
+\texttt{Staff} is the main mover in the underlying engine as it groks most
 of the various data-types and understands what to do with
-them. The of structure of \verb~%Staff~'s are transformed to
+them. The of structure of \texttt{Staff}'s are transformed to
 a list of time-annotated notes, the associated time data specifies
 how many milliseconds into execution the note is played.
 
@@ -117,24 +133,24 @@ In Harpsi the actual playable data is decided primarily by
 note-strings. The note-strings are parsed into chords and notes and
 act as below staff level. Transformation from raw string to
 playable data structure is performed by the \href{lib/parser.ex}{Parser}. The
-backbone of the \verb~Parser~ is \verb~process_word~ which serves as a
+backbone of the \texttt{Parser} is \texttt{process\_word} which serves as a
 dispatch to the various rules defining how the notes are
 constructed, each case of the cond serve as the individual rules
 for note construction. The rules of course can be any elixir
 expression. Regular expressions serve as the rules for how notes
 are constructed.
 
-The `bottom' of the language is \verb~process_note~, every word must
+The `bottom' of the language is \texttt{process\_note}, every word must
 decompose into single letters naming the notes A through G, or a
 rest. The language for note-strings is essentially a series of
-manipulations on \verb~%Note~, \verb~%Chord~, and \verb~%Rest~ structs, and so exists in the
+manipulations on \texttt{Note}, \texttt{Chord}, and \texttt{Rest} structs, and so exists in the
 small domain that currently allows. In the future this domain could
 be expanded by changing a finite number of (albeit yet
 undocumented) functions, and adding more fields to the two structs,
 and enhancing the engine. But it serves as a simple basis for my
 purposes that permits some limited amount of expression.
 
-As for rules, a good example is \verb~process_doctave~:
+As for rules, a good example is \texttt{process\_doctave}:
 \begin{verbatim}
 def process_doctave(word, opts) do
   cap = Regex.named_captures(~r/^(?<up_or_down>[<>])(?<word>.*)/, word)
@@ -150,9 +166,9 @@ This one is changes the the octave by a shift of
 Each rule should work on a certain foundation that could
 potentially be better enforced as macro. Implementing it is an
 exercise for the reader, but I'll note patterns that exist. The
-\verb~word~ arg is the individual note-string note in a staff. This is
+\texttt{word} arg is the individual note-string note in a staff. This is
 dissected by the rules via regex into the three basic structs,
-\verb~%Note~ and \verb~%Chord~, and \verb~%Rest~. On the other hand \verb~opts~ is
+\texttt{Note} and \texttt{Chord}, and \texttt{Rest}. On the other hand \texttt{opts} is
 concerned with the rest of the data associated with the notes.
 
 Most rules are built like
@@ -166,12 +182,12 @@ end
 with a little imagination, one could construct a macro for defining
 these rules in a structured way by templating the above snippet and
 adding an entry to a list of callback functions invoked by
-\verb~process_word~. More generally, the rules should have one of three
+\texttt{process\_word}. More generally, the rules should have one of three
 things in the tail place of the function. That is,
 \begin{enumerate}
-\item A recursive call back to \verb~process_word~ with modified parameters
-\item A \verb~Note~ struct
-\item A \verb~Rest~ struct
+\item A recursive call back to \texttt{process\_word} with modified parameters
+\item A \texttt{Note} struct
+\item A \texttt{Rest} struct
 \end{enumerate}
 Chord not included in the list because they're only a structure
 requiring constituent notes, of course.
@@ -179,13 +195,13 @@ requiring constituent notes, of course.
 \subsection{Macros in the language}
 \label{sec-3-2}
 All the macros exist in in \href{lib/lang.ex}{Lang}. The foremost actor is
-the \verb~piece~ macro which reflects the \verb~%Piece~ struct. When writing
-in Harpsi the \verb~piece~ macro provides a manipulable environment for
-writing \verb~Staff~'s of music and building the whole structure of the
-playable \verb~%Piece~.
+the \texttt{piece} macro which reflects the \texttt{Piece} struct. When writing
+in Harpsi the \texttt{piece} macro provides a manipulable environment for
+writing \texttt{Staff}'s of music and building the whole structure of the
+playable \texttt{Piece}.
 
 As stated there are two variable dimensions, the `buffer' of music
-and the `environment' the notes are created in. In \verb~Lang~ you'll
+and the `environment' the notes are created in. In \texttt{Lang} you'll
 find I use two agents to model this behavior in a unhygienic way,
 requiring a set of functions to handle an ad-hoc, unspecified
 behaviors for constructing the buffer and maintaining the
@@ -194,10 +210,10 @@ shared state is kept in it so the state is accessible at different
 points in macro expansion
 
 The buffer agent simply accumulates the musical structure and
-returns a list of \verb~Staff~'s, and the environment agent tracks the
+returns a list of \texttt{Staff}'s, and the environment agent tracks the
 state of the environment as a stack. Management of the environment
 is especially straight forward. The environment is initialized with
-the \verb~start_env~ function.
+the \texttt{start\_env} function.
 \begin{verbatim}
 def start_env(), do: Agent.start_link(fn ->
   [%{bpm: 120, octave: 4, type: 4}] end)
@@ -217,7 +233,7 @@ def pop_env(env), do: Agent.update(env, &tl/1)
 \end{verbatim}
 The functional requirements are minimal and the behavior
 is pretty intuitive. It's a simple stack that implements push, pop,
-and peek. The \verb~Agent~ must be cleaned up after use.
+and peek. The \texttt{Agent} must be cleaned up after use.
 \begin{verbatim}
 def stop_env(env), do: Agent.stop(env)
 \end{verbatim}
@@ -231,7 +247,7 @@ the environment. In the language of Harpsi this is of course is a
 vocabulary limited by the underlying data-structures and what can
 be done with them.
 
-The macro \verb~bpm~ in \href{lib/lang.ex}{Lang} is a closure with a predefined item in the
+The macro \texttt{bpm} in \href{lib/lang.ex}{Lang} is a closure with a predefined item in the
 environment the construct will manipulate.
 \begin{verbatim}
 defmacro bpm(n, do: inner) do
@@ -243,8 +259,8 @@ defmacro bpm(n, do: inner) do
   end
 end
 \end{verbatim}
-Of course, \verb~bpm~ manipulates the beats per minute of a
-\verb~Staff~. Such specific operations should generally be avoided
+Of course, \texttt{bpm} manipulates the beats per minute of a
+\texttt{Staff}. Such specific operations should generally be avoided
 because maintaining a language can become cumbersome if the domain
 grows too large. Instead favor generic interfaces to achieve the
 effect of a battalion of special cases.
@@ -258,5 +274,8 @@ defmacro w_opt(kwl, do: inner) do
   end
 end
 \end{verbatim}
+\section{Lessons learned}
+\label{sec-4}
+If I were to go back and 
 % Emacs 24.5.1 (Org mode 8.2.10)
 \end{document}

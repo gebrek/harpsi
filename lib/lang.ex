@@ -18,7 +18,8 @@ defmodule Lang do
   def put_buffer(buff, content), do: Agent.update(buff, &[content | &1])
   def render(buff), do: Agent.get(buff, &(&1)) |> Enum.reverse
 
-  def start_env(), do: Agent.start_link(fn -> [%{bpm: 120, octave: 4, type: 4}] end)
+  def start_env(), do: Agent.start_link(fn ->
+    [%{bpm: 120, octave: 4, type: 4}] end)
   def stop_env(env), do: Agent.stop(env)
   def push_env(env, attr_map) do
     new = Map.merge(get_env(env), attr_map)
@@ -62,5 +63,5 @@ defmodule Lang do
       pop_env var!(env, Lang)
     end
   end
-	
+  
 end

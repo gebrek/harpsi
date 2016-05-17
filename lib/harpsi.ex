@@ -85,7 +85,6 @@ defmodule Note do
 
   def play(note, opts \\ %{}) do
     System.cmd("play", note_args(note, opts))
-    # :timer.kill_after(100 * Map.get(opts, :len, 2))
   end
 
   def time(note, bpm) do

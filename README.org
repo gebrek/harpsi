@@ -8,16 +8,42 @@
   2. Rest
   3. Chord
   4. Staff
-  5. Notes
+  5. Note
   The first three are simpler than the last two. ~Piece~'s and
   ~Chord~'s are just structural indicators on ~Staff~'s and ~Note~'s
   respectively. ~Rest~'s are just placeholders for an empty location
   in a staff where a note typically exists.
+
+** Note Module
+   This module defines a note struct and methods to generate sound
+   data based off of the fields of ~%Note~ structs. As it stands it
+   relies on the external program /SoX/ to generate the note
+   sounds. This back-end for generating the sounds can be changed with
+   a small amount of effort because, fortunately, the procedures for
+   performing that sound generation is relegated to only a couple
+   modules.
+   
+** Staff Module
+   The ~Staff~ module defines the majority of the behavior for groups
+   of notes. The main function of this is to handle beats-per-minute
+   associated with a collection of measures, or notes.
+
+   ~Staff~ is the main mover in the underlying engine as it groks most
+   of the various data-types and understands what to do with
+   them. The of structure of ~%Staff~'s are transformed to
+   a list of time-annotated notes, the associated time data specifies
+   how many milliseconds into execution the note is played. 
+
+** Piece, Rest, and Chord Modules
+   These modules are very limited in scope and have a lot of room for
+   improvement at the current time.
+
 * The language
   The language is made up of two major parts, macros and
   note-strings. Macros provide some convenience facility for writing
   in Elixir while the note-strings are bit-strings which are parsed to
   generate the data.
+
 ** Note-Strings in the language
    In Harpsi the actual playable data is decided primarily by
    note-strings. The note-strings are parsed into chords and notes and
@@ -81,6 +107,7 @@
    3. A ~Rest~ struct
    Chord not included in the list because they're only a structure
    requiring constituent notes, of course.
+
 ** Macros in the language
    All the macros exist in in [[file:lib/lang.ex][Lang]]. The foremost actor is
    the ~piece~ macro which reflects the ~%Piece~ struct. When writing
@@ -155,7 +182,7 @@
    ~Staff~. Such specific operations should generally be avoided
    because maintaining a language can become cumbersome if the domain
    grows too large. Instead favor generic interfaces to achieve the
-   effect of a batallion of special cases.
+   effect of a battalion of special cases.
    #+BEGIN_SRC elixir
      defmacro w_opt(kwl, do: inner) do
        quote do

@@ -1,4 +1,4 @@
-% Created 2016-05-16 Mon 20:41
+% Created 2016-05-16 Mon 23:01
 \documentclass[11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -38,18 +38,47 @@ data-types:
 \item Rest
 \item Chord
 \item Staff
-\item Notes
+\item Note
 \end{enumerate}
 The first three are simpler than the last two. \verb~Piece~'s and
 \verb~Chord~'s are just structural indicators on \verb~Staff~'s and \verb~Note~'s
 respectively. \verb~Rest~'s are just placeholders for an empty location
 in a staff where a note typically exists.
+
+\subsection{Note Module}
+\label{sec-1-1}
+This module defines a note struct and methods to generate sound
+data based off of the fields of \verb~%Note~ structs. As it stands it
+relies on the external program \emph{SoX} to generate the note
+sounds. This back-end for generating the sounds can be changed with
+a small amount of effort because, fortunately, the procedures for
+performing that sound generation is relegated to only a couple
+modules.
+
+\subsection{Staff Module}
+\label{sec-1-2}
+The \verb~Staff~ module defines the majority of the behavior for groups
+of notes. The main function of this is to handle beats-per-minute
+associated with a collection of measures, or notes.
+
+\verb~Staff~ is the main mover in the underlying engine as it groks most
+of the various data-types and understands what to do with
+them. The of structure of \verb~%Staff~'s are transformed to
+a list of time-annotated notes, the associated time data specifies
+how many milliseconds into execution the note is played. 
+
+\subsection{Piece, Rest, and Chord Modules}
+\label{sec-1-3}
+These modules are very limited in scope and have a lot of room for
+improvement at the current time.
+
 \section{The language}
 \label{sec-2}
 The language is made up of two major parts, macros and
 note-strings. Macros provide some convenience facility for writing
 in Elixir while the note-strings are bit-strings which are parsed to
 generate the data.
+
 \subsection{Note-Strings in the language}
 \label{sec-2-1}
 In Harpsi the actual playable data is decided primarily by
@@ -114,6 +143,7 @@ things in the tail place of the function. That is,
 \end{enumerate}
 Chord not included in the list because they're only a structure
 requiring constituent notes, of course.
+
 \subsection{Macros in the language}
 \label{sec-2-2}
 All the macros exist in in \href{lib/lang.ex}{Lang}. The foremost actor is
@@ -185,7 +215,7 @@ Of course, \verb~bpm~ manipulates the beats per minute of a
 \verb~Staff~. Such specific operations should generally be avoided
 because maintaining a language can become cumbersome if the domain
 grows too large. Instead favor generic interfaces to achieve the
-effect of a batallion of special cases.
+effect of a battalion of special cases.
 \begin{verbatim}
 defmacro w_opt(kwl, do: inner) do
   quote do

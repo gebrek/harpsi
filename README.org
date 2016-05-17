@@ -177,14 +177,17 @@
    state of the environment as a stack. Management of the environment
    is especially straight forward. The environment is initialized with
    the =start_env= function.
+
    #+BEGIN_SRC elixir
      def start_env(), do: Agent.start_link(fn ->
        [%{bpm: 120, octave: 4, type: 4}] end)
 
    #+END_SRC
+
    This starts an agent with an initial element in the stack which
    serves as the `default' environment. The environment is maintained
    with a set of three functions:
+
    #+BEGIN_SRC elixir
      def push_env(env, attr_map) do
        new = Map.merge(get_env(env), attr_map)
@@ -196,9 +199,11 @@
      def pop_env(env), do: Agent.update(env, &tl/1)
 
    #+END_SRC
+
    The functional requirements are minimal and the behavior
    is pretty intuitive. It's a simple stack that implements push, pop,
    and peek. The =Agent= must be cleaned up after use.
+
    #+BEGIN_SRC elixir
      def stop_env(env), do: Agent.stop(env)
 
@@ -215,6 +220,7 @@
 
    The macro =bpm= in [[file:lib/lang.ex][Lang]] is a closure with a predefined item in the
    environment the construct will manipulate.
+
    #+BEGIN_SRC elixir
      defmacro bpm(n, do: inner) do
        quote do
@@ -226,11 +232,13 @@
      end
 
    #+END_SRC
+
    Of course, =bpm= manipulates the beats per minute of a
    =Staff=. Such specific operations should generally be avoided
    because maintaining a language can become cumbersome if the domain
    grows too large. Instead favor generic interfaces to achieve the
    effect of a battalion of special cases.
+
    #+BEGIN_SRC elixir
      defmacro w_opt(kwl, do: inner) do
        quote do
@@ -242,6 +250,7 @@
      end
 
    #+END_SRC
+
    The structure of the piece of music is encoded into macros as
    well. Witht the =piece= macro and =staff= macro for composing
    staffs and notes respectively. =piece= only initializes the two
@@ -249,6 +258,7 @@
    into a =Piece= struct. =staff= similarly reflects the underlying
    =Staff= structs, generating a struct based on the environment it's
    constructed in, and the string passed to the macro.
+
    #+BEGIN_SRC elixir
      defmacro staff(inner) do
        quote do
@@ -260,7 +270,26 @@
      end
 
    #+END_SRC
+
    =Staff='s are collected into the shared =buffer= variable, and
    placed in a =Piece=.
-* Lessons learned
-  
+
+* Conclusion
+  If I were to do it over again I'd scrap the string processing
+  portion of it, A set of functions or macros with equivalent
+  functionality I expect would be comparably as simple to create while
+  allowing for easier composability conferred by using the mother
+  language's extension facilities (i.e. macros and functions).
+
+  [[file:lib/sheet.ex][Sheets]] is a list of pieces of executable music I created while
+  developing Harpsi, ordered (more or less) from the oldest piece at
+  the top to the latest at the bottom. As is easily observable the
+  language used to write the pieces becomes more expressive. I left in
+  the functions that served as an ad-hoc sketch of later iterations of
+  the language (=times=, =ctc=, =ntc=, and =ntb=). These functions
+  reflect the what was implemented through parsing and macros.
+
+  The last two functions in =Sheets= are pieces in the final
+  language. They're my rather poor renditions of Ring Around the Rosie
+  and London Bridge.
+g

@@ -1,4 +1,4 @@
-% Created 2016-05-17 Tue 00:56
+% Created 2016-05-17 Tue 01:11
 \documentclass[11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -214,13 +214,16 @@ returns a list of \texttt{Staff}'s, and the environment agent tracks the
 state of the environment as a stack. Management of the environment
 is especially straight forward. The environment is initialized with
 the \texttt{start\_env} function.
+
 \begin{verbatim}
 def start_env(), do: Agent.start_link(fn ->
   [%{bpm: 120, octave: 4, type: 4}] end)
 \end{verbatim}
+
 This starts an agent with an initial element in the stack which
 serves as the `default' environment. The environment is maintained
 with a set of three functions:
+
 \begin{verbatim}
 def push_env(env, attr_map) do
   new = Map.merge(get_env(env), attr_map)
@@ -231,9 +234,11 @@ def get_env(env), do: Agent.get(env, &(&1)) |> hd
 
 def pop_env(env), do: Agent.update(env, &tl/1)
 \end{verbatim}
+
 The functional requirements are minimal and the behavior
 is pretty intuitive. It's a simple stack that implements push, pop,
 and peek. The \texttt{Agent} must be cleaned up after use.
+
 \begin{verbatim}
 def stop_env(env), do: Agent.stop(env)
 \end{verbatim}
@@ -249,6 +254,7 @@ be done with them.
 
 The macro \texttt{bpm} in \href{lib/lang.ex}{Lang} is a closure with a predefined item in the
 environment the construct will manipulate.
+
 \begin{verbatim}
 defmacro bpm(n, do: inner) do
   quote do
@@ -259,11 +265,13 @@ defmacro bpm(n, do: inner) do
   end
 end
 \end{verbatim}
+
 Of course, \texttt{bpm} manipulates the beats per minute of a
 \texttt{Staff}. Such specific operations should generally be avoided
 because maintaining a language can become cumbersome if the domain
 grows too large. Instead favor generic interfaces to achieve the
 effect of a battalion of special cases.
+
 \begin{verbatim}
 defmacro w_opt(kwl, do: inner) do
   quote do
@@ -274,6 +282,7 @@ defmacro w_opt(kwl, do: inner) do
   end
 end
 \end{verbatim}
+
 The structure of the piece of music is encoded into macros as
 well. Witht the \texttt{piece} macro and \texttt{staff} macro for composing
 staffs and notes respectively. \texttt{piece} only initializes the two
@@ -281,6 +290,7 @@ helper agents and puts the result of processing the macro's body
 into a \texttt{Piece} struct. \texttt{staff} similarly reflects the underlying
 \texttt{Staff} structs, generating a struct based on the environment it's
 constructed in, and the string passed to the macro.
+
 \begin{verbatim}
 defmacro staff(inner) do
   quote do
@@ -291,9 +301,27 @@ defmacro staff(inner) do
   end
 end
 \end{verbatim}
+
 \texttt{Staff}'s are collected into the shared \texttt{buffer} variable, and
 placed in a \texttt{Piece}.
-\section{Lessons learned}
+
+\section{Conclusion}
 \label{sec-4}
+If I were to do it over again I'd scrap the string processing
+portion of it, A set of functions or macros with equivalent
+functionality I expect would be comparably as simple to create while
+allowing for easier composability conferred by using the mother
+language's extension facilities (i.e. macros and functions).
+
+\href{lib/sheet.ex}{Sheets} is a list of pieces of executable music I created while
+developing Harpsi, ordered (more or less) from the oldest piece at
+the top to the latest at the bottom. As is easily observable the
+language used to write the pieces becomes more expressive. I left in
+the functions that served as an ad-hoc sketch of later iterations of
+the language (\texttt{times}, \texttt{ctc}, \texttt{ntc}, and \texttt{ntb}).
+
+The last two functions in \texttt{Sheets} are pieces in the final
+language. They're my rather poor renditions of Ring Around the Rosie
+and London Bridge.
 % Emacs 24.5.1 (Org mode 8.2.10)
 \end{document}

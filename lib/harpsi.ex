@@ -88,7 +88,14 @@ defmodule Note do
     # :timer.kill_after(100 * Map.get(opts, :len, 2))
   end
 
-  def note_args(note, opts) do
+  def time(note, bpm) do
+    type_time(note.type, bpm)
+  end
+  def type_time(type, bpm) do
+    (4 / type) * (60 / bpm)
+  end
+
+  defp note_args(note, opts) do
     ["-qn", "synth",
      to_string(4 / note.type),
      Map.get(opts, :type, "pluck"),
@@ -97,22 +104,15 @@ defmodule Note do
     ]
   end
 
-  def process_note(note) do
+  defp process_note(note) do
     note.name <> to_string(note.octave)
   end
 
-  def valid_notes do
+  defp valid_notes do
     for names <- String.graphemes("CDEFGAB"),
       types <- [1, 2, 4, 8, 16],
       octaves <- 1..7, into: [] do
       %Note{name: names, type: types, octave: octaves}
     end
-  end
-
-  def time(note, bpm) do
-    type_time(note.type, bpm)
-  end
-  def type_time(type, bpm) do
-    (4 / type) * (60 / bpm)
   end
 end

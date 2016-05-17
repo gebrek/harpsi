@@ -6,7 +6,7 @@ defmodule Lang do
       {:ok, var!(buffer, Lang)} = start_buffer([])
       {:ok, var!(env, Lang)} = start_env
       unquote(block)
-      result = render(var!(buffer, Lang))
+      result = get_buffer(var!(buffer, Lang))
       :ok = stop_buffer(var!(buffer, Lang))
       :ok = stop_env(var!(env, Lang))
       %Piece{staffs: result}
@@ -16,7 +16,7 @@ defmodule Lang do
   def start_buffer(state), do: Agent.start_link(fn -> state end)
   def stop_buffer(buff), do: Agent.stop(buff)
   def put_buffer(buff, content), do: Agent.update(buff, &[content | &1])
-  def render(buff), do: Agent.get(buff, &(&1)) |> Enum.reverse
+  def get_buffer(buff), do: Agent.get(buff, &(&1)) |> Enum.reverse
 
   def start_env(), do: Agent.start_link(fn ->
     [%{bpm: 120, octave: 4, type: 4}] end)

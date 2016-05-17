@@ -1,4 +1,4 @@
-% Created 2016-05-16 Mon 19:45
+% Created 2016-05-16 Mon 20:41
 \documentclass[11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -28,18 +28,34 @@
 \maketitle
 \tableofcontents
 
-\section{The Language}
+\section{The engine}
 \label{sec-1}
+Underlying the higher level constructs for constructing pieces of
+music is the struct-based data representation. There are five
+data-types:
+\begin{enumerate}
+\item Piece
+\item Rest
+\item Chord
+\item Staff
+\item Notes
+\end{enumerate}
+The first three are simpler than the last two. \verb~Piece~'s and
+\verb~Chord~'s are just structural indicators on \verb~Staff~'s and \verb~Note~'s
+respectively. \verb~Rest~'s are just placeholders for an empty location
+in a staff where a note typically exists.
+\section{The language}
+\label{sec-2}
 The language is made up of two major parts, macros and
 note-strings. Macros provide some convenience facility for writing
 in Elixir while the note-strings are bit-strings which are parsed to
 generate the data.
-\subsection{Note-Strings in the Language}
-\label{sec-1-1}
+\subsection{Note-Strings in the language}
+\label{sec-2-1}
 In Harpsi the actual playable data is decided primarily by
 note-strings. The note-strings are parsed into chords and notes and
 act as below staff level. Transformation from raw string to
-playable data structure is performed by the \url{lib/parser.ex}. The
+playable data structure is performed by the \href{lib/parser.ex}{Parser}. The
 backbone of the \verb~Parser~ is \verb~process_word~ which serves as a
 dispatch to the various rules defining how the notes are
 constructed, each case of the cond serve as the individual rules
@@ -98,9 +114,9 @@ things in the tail place of the function. That is,
 \end{enumerate}
 Chord not included in the list because they're only a structure
 requiring constituent notes, of course.
-\subsection{Macros in the Language}
-\label{sec-1-2}
-All the macros exist in in \url{lib/lang.ex}. The foremost actor is
+\subsection{Macros in the language}
+\label{sec-2-2}
+All the macros exist in in \href{lib/lang.ex}{Lang}. The foremost actor is
 the \verb~piece~ macro which reflects the \verb~%Piece~ struct. When writing
 in Harpsi the \verb~piece~ macro provides a manipulable environment for
 writing \verb~Staff~'s of music and building the whole structure of the
@@ -139,7 +155,10 @@ def pop_env(env), do: Agent.update(env, &tl/1)
 \end{verbatim}
 The functional requirements are minimal and the behavior
 is pretty intuitive. It's a simple stack that implements push, pop,
-and peek.
+and peek. The \verb~Agent~ must be cleaned up after use.
+\begin{verbatim}
+def stop_env(env), do: Agent.stop(env)
+\end{verbatim}
 
 If built with the proper initialization and cleanup of the
 environment and changes to it, macros built with these two simple
@@ -150,6 +169,32 @@ the environment. In the language of Harpsi this is of course is a
 vocabulary limited by the underlying data-structures and what can
 be done with them.
 
-The macro \verb~bpm~ in \url{lib/lang.ex}
+The macro \verb~bpm~ in \href{lib/lang.ex}{Lang} is a closure with a predefined item in the
+environment the construct will manipulate.
+\begin{verbatim}
+defmacro bpm(n, do: inner) do
+  quote do
+    push_env var!(env, Lang),
+      %{bpm: unquote(n)}
+    unquote(inner)
+    pop_env var!(env, Lang)
+  end
+end
+\end{verbatim}
+Of course, \verb~bpm~ manipulates the beats per minute of a
+\verb~Staff~. Such specific operations should generally be avoided
+because maintaining a language can become cumbersome if the domain
+grows too large. Instead favor generic interfaces to achieve the
+effect of a batallion of special cases.
+\begin{verbatim}
+defmacro w_opt(kwl, do: inner) do
+  quote do
+    push_env var!(env, Lang),
+      Enum.into(unquote(kwl), %{})
+    unquote(inner)
+    pop_env var!(env, Lang)
+  end
+end
+\end{verbatim}
 % Emacs 24.5.1 (Org mode 8.2.10)
 \end{document}

@@ -1,4 +1,4 @@
-% Created 2016-05-16 Mon 23:11
+% Created 2016-05-16 Mon 23:46
 \documentclass[11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -28,8 +28,11 @@
 \maketitle
 \tableofcontents
 
-\section{The engine}
+\section{Introduction}
 \label{sec-1}
+
+\section{The engine}
+\label{sec-2}
 Underlying the higher level constructs for constructing pieces of
 music is the struct-based data representation. There are five
 data-types:
@@ -46,7 +49,7 @@ respectively. \verb~Rest~'s are just placeholders for an empty location
 in a staff where a note typically exists.
 
 \subsection{Note Module}
-\label{sec-1-1}
+\label{sec-2-1}
 This module defines a note struct and methods to generate sound
 data based off of the fields of \verb~%Note~ structs. As it stands it
 relies on the external program \emph{SoX} to generate the note
@@ -55,11 +58,27 @@ a small amount of effort because, fortunately, the procedures for
 performing that sound generation is relegated to only a couple
 modules.
 
-The two most important functions in \verb~Note~ are \texttt{play} and
-\texttt{note\_args}
+The two most important functions in \href{lib/harpsi.ex}{Note} are \texttt{play} and
+\texttt{note\_args}. \texttt{play} invokes the system call and \texttt{note\_args}
+constructs the arguments that will be passed to the "play" program
+provided by SoX.
+\begin{verbatim}
+def play(note, opts \\ %{}) do
+  System.cmd("play", note_args(note, opts))
+end
+
+defp note_args(note, opts) do
+  ["-qn", "synth",
+   to_string(4 / note.type),
+   Map.get(opts, :type, "pluck"),
+   process_note(note),
+   "vol", Map.get(opts, :vol, "1")
+  ]
+end
+\end{verbatim}
 
 \subsection{Staff Module}
-\label{sec-1-2}
+\label{sec-2-2}
 The \verb~Staff~ module defines the majority of the behavior for groups
 of notes. The main function of this is to handle beats-per-minute
 associated with a collection of measures, or notes.
@@ -68,22 +87,32 @@ associated with a collection of measures, or notes.
 of the various data-types and understands what to do with
 them. The of structure of \verb~%Staff~'s are transformed to
 a list of time-annotated notes, the associated time data specifies
-how many milliseconds into execution the note is played. 
+how many milliseconds into execution the note is played.
+
+The backbone of \texttt{Staff}, \texttt{tag\_note\_delays} was put together before
+I had a more complete understanding of what I was doing but
+nevertheless serves its function well enough. It serves to flatten
+the structure of the piece, everything under staff level becomes a
+2-tuple with the first place denoting the time at which the note is
+played, and the second is the actual note itself.
 
 \subsection{Piece, Rest, and Chord Modules}
-\label{sec-1-3}
+\label{sec-2-3}
 These modules are very limited in scope and have a lot of room for
-improvement at the current time.
+improvement in the future. \texttt{Rest}'s and \texttt{Chord}'s are elements of
+\texttt{Staff}'s, and \texttt{Staff}'s are elements in \texttt{Piece}'s. They serve
+mostly to implement structural alterations to music pieces and are
+parsed out of existence early on.
 
 \section{The language}
-\label{sec-2}
+\label{sec-3}
 The language is made up of two major parts, macros and
 note-strings. Macros provide some convenience facility for writing
 in Elixir while the note-strings are bit-strings which are parsed to
 generate the data.
 
 \subsection{Note-Strings in the language}
-\label{sec-2-1}
+\label{sec-3-1}
 In Harpsi the actual playable data is decided primarily by
 note-strings. The note-strings are parsed into chords and notes and
 act as below staff level. Transformation from raw string to
@@ -93,7 +122,7 @@ dispatch to the various rules defining how the notes are
 constructed, each case of the cond serve as the individual rules
 for note construction. The rules of course can be any elixir
 expression. Regular expressions serve as the rules for how notes
-are constructed. 
+are constructed.
 
 The `bottom' of the language is \verb~process_note~, every word must
 decompose into single letters naming the notes A through G, or a
@@ -116,7 +145,7 @@ def process_doctave(word, opts) do
 		       end)))
 end
 \end{verbatim}
-This one is changes the the octave by a shift of 
+This one is changes the the octave by a shift of
 
 Each rule should work on a certain foundation that could
 potentially be better enforced as macro. Implementing it is an
@@ -148,7 +177,7 @@ Chord not included in the list because they're only a structure
 requiring constituent notes, of course.
 
 \subsection{Macros in the language}
-\label{sec-2-2}
+\label{sec-3-2}
 All the macros exist in in \href{lib/lang.ex}{Lang}. The foremost actor is
 the \verb~piece~ macro which reflects the \verb~%Piece~ struct. When writing
 in Harpsi the \verb~piece~ macro provides a manipulable environment for
@@ -170,7 +199,7 @@ state of the environment as a stack. Management of the environment
 is especially straight forward. The environment is initialized with
 the \verb~start_env~ function.
 \begin{verbatim}
-def start_env(), do: Agent.start_link(fn -> 
+def start_env(), do: Agent.start_link(fn ->
   [%{bpm: 120, octave: 4, type: 4}] end)
 \end{verbatim}
 This starts an agent with an initial element in the stack which

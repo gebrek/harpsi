@@ -1,5 +1,7 @@
 #+TITLE: Building a DSL for Music Composition
 #+AUTHOR: Jacob Sonnenberg
+* Introduction
+
 * The engine
   Underlying the higher level constructs for constructing pieces of
   music is the struct-based data representation. There are five
@@ -24,8 +26,25 @@
    modules.
 
    The two most important functions in [[file:lib/harpsi.ex][Note]] are =play= and
-   =note_args=
-   
+   =note_args=. =play= invokes the system call and =note_args=
+   constructs the arguments that will be passed to the "play" program
+   provided by SoX.
+   #+BEGIN_SRC elixir
+     def play(note, opts \\ %{}) do
+       System.cmd("play", note_args(note, opts))
+     end
+
+     defp note_args(note, opts) do
+       ["-qn", "synth",
+        to_string(4 / note.type),
+        Map.get(opts, :type, "pluck"),
+        process_note(note),
+        "vol", Map.get(opts, :vol, "1")
+       ]
+     end
+
+   #+END_SRC
+
 ** Staff Module
    The ~Staff~ module defines the majority of the behavior for groups
    of notes. The main function of this is to handle beats-per-minute
@@ -35,11 +54,21 @@
    of the various data-types and understands what to do with
    them. The of structure of ~%Staff~'s are transformed to
    a list of time-annotated notes, the associated time data specifies
-   how many milliseconds into execution the note is played. 
+   how many milliseconds into execution the note is played.
+
+   The backbone of =Staff=, =tag_note_delays= was put together before
+   I had a more complete understanding of what I was doing but
+   nevertheless serves its function well enough. It serves to flatten
+   the structure of the piece, everything under staff level becomes a
+   2-tuple with the first place denoting the time at which the note is
+   played, and the second is the actual note itself.
 
 ** Piece, Rest, and Chord Modules
    These modules are very limited in scope and have a lot of room for
-   improvement at the current time.
+   improvement in the future. =Rest='s and =Chord='s are elements of
+   =Staff='s, and =Staff='s are elements in =Piece='s. They serve
+   mostly to implement structural alterations to music pieces and are
+   parsed out of existence early on.
 
 * The language
   The language is made up of two major parts, macros and
@@ -57,8 +86,8 @@
    constructed, each case of the cond serve as the individual rules
    for note construction. The rules of course can be any elixir
    expression. Regular expressions serve as the rules for how notes
-   are constructed. 
-   
+   are constructed.
+
    The `bottom' of the language is ~process_note~, every word must
    decompose into single letters naming the notes A through G, or a
    rest. The language for note-strings is essentially a series of
@@ -68,7 +97,7 @@
    undocumented) functions, and adding more fields to the two structs,
    and enhancing the engine. But it serves as a simple basis for my
    purposes that permits some limited amount of expression.
-   
+
    As for rules, a good example is ~process_doctave~:
    #+BEGIN_SRC elixir
      def process_doctave(word, opts) do
@@ -81,8 +110,8 @@
      end
 
    #+END_SRC
-   This one is changes the the octave by a shift of 
-   
+   This one is changes the the octave by a shift of
+
    Each rule should work on a certain foundation that could
    potentially be better enforced as macro. Implementing it is an
    exercise for the reader, but I'll note patterns that exist. The
@@ -90,7 +119,7 @@
    dissected by the rules via regex into the three basic structs,
    ~%Note~ and ~%Chord~, and ~%Rest~. On the other hand ~opts~ is
    concerned with the rest of the data associated with the notes.
-   
+
    Most rules are built like
    #+BEGIN_SRC elixir
      def process_<case>(word, opts) do
@@ -117,7 +146,7 @@
    in Harpsi the ~piece~ macro provides a manipulable environment for
    writing ~Staff~'s of music and building the whole structure of the
    playable ~%Piece~.
-   
+
    As stated there are two variable dimensions, the `buffer' of music
    and the `environment' the notes are created in. In ~Lang~ you'll
    find I use two agents to model this behavior in a unhygienic way,
@@ -126,14 +155,14 @@
    environment. Agents are "simple abstractions around state", some
    shared state is kept in it so the state is accessible at different
    points in macro expansion
-   
+
    The buffer agent simply accumulates the musical structure and
    returns a list of ~Staff~'s, and the environment agent tracks the
    state of the environment as a stack. Management of the environment
    is especially straight forward. The environment is initialized with
    the ~start_env~ function.
    #+BEGIN_SRC elixir
-     def start_env(), do: Agent.start_link(fn -> 
+     def start_env(), do: Agent.start_link(fn ->
        [%{bpm: 120, octave: 4, type: 4}] end)
 
    #+END_SRC
@@ -158,7 +187,7 @@
      def stop_env(env), do: Agent.stop(env)
 
    #+END_SRC
-   
+
    If built with the proper initialization and cleanup of the
    environment and changes to it, macros built with these two simple
    tools allow for some flexibility in potential language
@@ -167,7 +196,7 @@
    the environment. In the language of Harpsi this is of course is a
    vocabulary limited by the underlying data-structures and what can
    be done with them.
-   
+
    The macro ~bpm~ in [[file:lib/lang.ex][Lang]] is a closure with a predefined item in the
    environment the construct will manipulate.
    #+BEGIN_SRC elixir
@@ -197,4 +226,3 @@
      end
 
    #+END_SRC
-   

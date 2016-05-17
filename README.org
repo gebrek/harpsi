@@ -242,5 +242,25 @@
      end
 
    #+END_SRC
+   The structure of the piece of music is encoded into macros as
+   well. Witht the =piece= macro and =staff= macro for composing
+   staffs and notes respectively. =piece= only initializes the two
+   helper agents and puts the result of processing the macro's body
+   into a =Piece= struct. =staff= similarly reflects the underlying
+   =Staff= structs, generating a struct based on the environment it's
+   constructed in, and the string passed to the macro.
+   #+BEGIN_SRC elixir
+     defmacro staff(inner) do
+       quote do
+         put_buffer var!(buffer, Lang),
+           %Staff{bpm: get_env(var!(env, Lang))[:bpm],
+                  octave: get_env(var!(env, Lang))[:octave],
+                  measures: process_notestring(unquote(inner), get_env(var!(env, Lang)))}
+       end
+     end
+
+   #+END_SRC
+   =Staff='s are collected into the shared =buffer= variable, and
+   placed in a =Piece=.
 * Lessons learned
-  If I were to go back and 
+  

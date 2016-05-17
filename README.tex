@@ -1,4 +1,4 @@
-% Created 2016-05-17 Tue 00:42
+% Created 2016-05-17 Tue 00:56
 \documentclass[11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -274,8 +274,26 @@ defmacro w_opt(kwl, do: inner) do
   end
 end
 \end{verbatim}
+The structure of the piece of music is encoded into macros as
+well. Witht the \texttt{piece} macro and \texttt{staff} macro for composing
+staffs and notes respectively. \texttt{piece} only initializes the two
+helper agents and puts the result of processing the macro's body
+into a \texttt{Piece} struct. \texttt{staff} similarly reflects the underlying
+\texttt{Staff} structs, generating a struct based on the environment it's
+constructed in, and the string passed to the macro.
+\begin{verbatim}
+defmacro staff(inner) do
+  quote do
+    put_buffer var!(buffer, Lang),
+      %Staff{bpm: get_env(var!(env, Lang))[:bpm],
+	     octave: get_env(var!(env, Lang))[:octave],
+	     measures: process_notestring(unquote(inner), get_env(var!(env, Lang)))}
+  end
+end
+\end{verbatim}
+\texttt{Staff}'s are collected into the shared \texttt{buffer} variable, and
+placed in a \texttt{Piece}.
 \section{Lessons learned}
 \label{sec-4}
-If I were to go back and 
 % Emacs 24.5.1 (Org mode 8.2.10)
 \end{document}

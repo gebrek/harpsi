@@ -24,7 +24,7 @@
    modules.
 
    The two most important functions in ~Note~ are ~play~ and
-   =[[file:lib/harpsi.ex::97][note_args]]=
+   ~[[file:lib/harpsi.ex::97][note_args]]~
    
 ** Staff Module
    The ~Staff~ module defines the majority of the behavior for groups

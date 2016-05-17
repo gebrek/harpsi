@@ -1,4 +1,4 @@
-% Created 2016-05-16 Mon 17:46
+% Created 2016-05-16 Mon 19:45
 \documentclass[11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -139,6 +139,17 @@ def pop_env(env), do: Agent.update(env, &tl/1)
 \end{verbatim}
 The functional requirements are minimal and the behavior
 is pretty intuitive. It's a simple stack that implements push, pop,
-and peek. In this way the macro 
+and peek.
+
+If built with the proper initialization and cleanup of the
+environment and changes to it, macros built with these two simple
+tools allow for some flexibility in potential language
+constructs. A obvious pattern is the closure, a language construct
+that clearly marks the beginning and end of some modification to
+the environment. In the language of Harpsi this is of course is a
+vocabulary limited by the underlying data-structures and what can
+be done with them.
+
+The macro \verb~bpm~ in \url{lib/lang.ex}
 % Emacs 24.5.1 (Org mode 8.2.10)
 \end{document}

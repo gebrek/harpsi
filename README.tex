@@ -1,0 +1,144 @@
+% Created 2016-05-16 Mon 17:46
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{fixltx2e}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{float}
+\usepackage{wrapfig}
+\usepackage{rotating}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{textcomp}
+\usepackage{marvosym}
+\usepackage{wasysym}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\tolerance=1000
+\author{Jacob Sonnenberg}
+\date{\today}
+\title{Building a DSL for Music Composition}
+\hypersetup{
+  pdfkeywords={},
+  pdfsubject={},
+  pdfcreator={Emacs 24.5.1 (Org mode 8.2.10)}}
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\section{The Language}
+\label{sec-1}
+The language is made up of two major parts, macros and
+note-strings. Macros provide some convenience facility for writing
+in Elixir while the note-strings are bit-strings which are parsed to
+generate the data.
+\subsection{Note-Strings in the Language}
+\label{sec-1-1}
+In Harpsi the actual playable data is decided primarily by
+note-strings. The note-strings are parsed into chords and notes and
+act as below staff level. Transformation from raw string to
+playable data structure is performed by the \url{lib/parser.ex}. The
+backbone of the \verb~Parser~ is \verb~process_word~ which serves as a
+dispatch to the various rules defining how the notes are
+constructed, each case of the cond serve as the individual rules
+for note construction. The rules of course can be any elixir
+expression. Regular expressions serve as the rules for how notes
+are constructed. 
+
+The `bottom' of the language is \verb~process_note~, every word must
+decompose into single letters naming the notes A through G, or a
+rest. The language for note-strings is essentially a series of
+manipulations on \verb~%Note~, \verb~%Chord~, and \verb~%Rest~ structs, and so exists in the
+small domain that currently allows. In the future this domain could
+be expanded by changing a finite number of (albeit yet
+undocumented) functions, and adding more fields to the two structs,
+and enhancing the engine. But it serves as a simple basis for my
+purposes that permits some limited amount of expression.
+
+As for rules, a good example is \verb~process_doctave~:
+\begin{verbatim}
+def process_doctave(word, opts) do
+  cap = Regex.named_captures(~r/^(?<up_or_down>[<>])(?<word>.*)/, word)
+  process_word(cap["word"], Map.put(opts, :octave,
+	opts.octave + (case cap["up_or_down"] do
+			 "<" -> -1
+			 ">" -> 1
+		       end)))
+end
+\end{verbatim}
+This one is changes the the octave by a shift of 
+
+Each rule should work on a certain foundation that could
+potentially be better enforced as macro. Implementing it is an
+exercise for the reader, but I'll note patterns that exist. The
+\verb~word~ arg is the individual note-string note in a staff. This is
+dissected by the rules via regex into the three basic structs,
+\verb~%Note~ and \verb~%Chord~, and \verb~%Rest~. On the other hand \verb~opts~ is
+concerned with the rest of the data associated with the notes.
+
+Most rules are built like
+\begin{verbatim}
+def process_<case>(word, opts) do
+  cap = Regex.named_captures(<regex recognizing case>, word)
+  process_word(<transformation on cap["word"]>,
+    <transformations of the structs>)
+end
+\end{verbatim}
+with a little imagination, one could construct a macro for defining
+these rules in a structured way by templating the above snippet and
+adding an entry to a list of callback functions invoked by
+\verb~process_word~. More generally, the rules should have one of three
+things in the tail place of the function. That is,
+\begin{enumerate}
+\item A recursive call back to \verb~process_word~ with modified parameters
+\item A \verb~Note~ struct
+\item A \verb~Rest~ struct
+\end{enumerate}
+Chord not included in the list because they're only a structure
+requiring constituent notes, of course.
+\subsection{Macros in the Language}
+\label{sec-1-2}
+All the macros exist in in \url{lib/lang.ex}. The foremost actor is
+the \verb~piece~ macro which reflects the \verb~%Piece~ struct. When writing
+in Harpsi the \verb~piece~ macro provides a manipulable environment for
+writing \verb~Staff~'s of music and building the whole structure of the
+playable \verb~%Piece~.
+
+As stated there are two variable dimensions, the `buffer' of music
+and the `environment' the notes are created in. In \verb~Lang~ you'll
+find I use two agents to model this behavior in a unhygienic way,
+requiring a set of functions to handle an ad-hoc, unspecified
+behaviors for constructing the buffer and maintaining the
+environment. Agents are "simple abstractions around state", some
+shared state is kept in it so the state is accessible at different
+points in macro expansion
+
+The buffer agent simply accumulates the musical structure and
+returns a list of \verb~Staff~'s, and the environment agent tracks the
+state of the environment as a stack. Management of the environment
+is especially straight forward. The environment is initialized with
+the \verb~start_env~ function.
+\begin{verbatim}
+def start_env(), do: Agent.start_link(fn -> 
+  [%{bpm: 120, octave: 4, type: 4}] end)
+\end{verbatim}
+This starts an agent with an initial element in the stack which
+serves as the `default' environment. The environment is maintained
+with a set of three functions:
+\begin{verbatim}
+def push_env(env, attr_map) do
+  new = Map.merge(get_env(env), attr_map)
+  Agent.update(env, &[new | &1])
+end
+
+def get_env(env), do: Agent.get(env, &(&1)) |> hd
+
+def pop_env(env), do: Agent.update(env, &tl/1)
+\end{verbatim}
+The functional requirements are minimal and the behavior
+is pretty intuitive. It's a simple stack that implements push, pop,
+and peek. In this way the macro 
+% Emacs 24.5.1 (Org mode 8.2.10)
+\end{document}

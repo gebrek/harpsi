@@ -117,4 +117,4 @@
    vocabulary limited by the underlying data-structures and what can
    be done with them.
 
-   The macro ~bpm~ in file:lib/lang.ex
+   The macro ~bpm~ in [[file:lib/lang.ex][Lang]]

@@ -126,7 +126,8 @@
      end
 
    #+END_SRC
-   This one is changes the the octave by a shift of
+   It shifts the octave up or down one. Multiple can be used for
+   larger shifts.
 
    Each rule should work on a certain foundation that could
    potentially be better enforced as macro. Implementing it is an
@@ -286,10 +287,8 @@
   the top to the latest at the bottom. As is easily observable the
   language used to write the pieces becomes more expressive. I left in
   the functions that served as an ad-hoc sketch of later iterations of
-  the language (=times=, =ctc=, =ntc=, and =ntb=). These functions
-  reflect the what was implemented through parsing and macros.
+  the language (=times=, =ctc=, =ntc=, and =ntb=).
 
   The last two functions in =Sheets= are pieces in the final
   language. They're my rather poor renditions of Ring Around the Rosie
   and London Bridge.
-g

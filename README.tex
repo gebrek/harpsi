@@ -1,4 +1,4 @@
-% Created 2016-05-17 Tue 17:42
+% Created 2016-05-17 Tue 21:45
 \documentclass[11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -161,7 +161,8 @@ def process_doctave(word, opts) do
 		       end)))
 end
 \end{verbatim}
-This one is changes the the octave by a shift of
+It shifts the octave up or down one. Multiple can be used for
+larger shifts.
 
 Each rule should work on a certain foundation that could
 potentially be better enforced as macro. Implementing it is an
@@ -318,12 +319,10 @@ developing Harpsi, ordered (more or less) from the oldest piece at
 the top to the latest at the bottom. As is easily observable the
 language used to write the pieces becomes more expressive. I left in
 the functions that served as an ad-hoc sketch of later iterations of
-the language (\texttt{times}, \texttt{ctc}, \texttt{ntc}, and \texttt{ntb}). These functions
-reflect the what was implemented through parsing and macros.
+the language (\texttt{times}, \texttt{ctc}, \texttt{ntc}, and \texttt{ntb}).
 
-  The last two functions in \texttt{Sheets} are pieces in the final
-  language. They're my rather poor renditions of Ring Around the Rosie
-  and London Bridge.
-g
+The last two functions in \texttt{Sheets} are pieces in the final
+language. They're my rather poor renditions of Ring Around the Rosie
+and London Bridge.
 % Emacs 24.5.1 (Org mode 8.2.10)
 \end{document}
